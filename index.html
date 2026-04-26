@@ -1,513 +1,1726 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SubTrack — Know what you pay. Every month.</title>
-  <meta name="description" content="SubTrack automatically detects your subscriptions from bank SMS and shows you exactly what you're spending every month. Available on Android." />
+  <meta name="description" content="SubTrack automatically detects your subscriptions from bank SMS and shows you exactly what you're spending every month. 100% offline. Available on Android." />
   <meta property="og:title" content="SubTrack — Subscription Tracker" />
-  <meta property="og:description" content="Auto-detect subscriptions from bank SMS. Track Netflix, Spotify, Hotstar and 45+ services." />
+  <meta property="og:description" content="Auto-detect subscriptions from bank SMS. Track Netflix, Spotify, Hotstar and 45+ services. 100% free, 100% offline." />
+  <meta property="og:image" content="icon_512.png" />
   <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="icon_512.png" type="image/png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
+  <style>
+    /* ═══════════════════════════════════════════
+       DESIGN TOKENS
+    ═══════════════════════════════════════════ */
     :root {
-      --blue: #3D5AFE;
-      --blue-dark: #1a3bcc;
-      --blue-light: #e8ecff;
-      --text: #0f172a;
-      --text-muted: #64748b;
-      --bg: #ffffff;
-      --card-bg: #f8fafc;
-      --border: #e2e8f0;
+      --primary: #4F46E5;
+      --primary-light: #6366F1;
+      --primary-glow: rgba(79, 70, 229, 0.35);
+      --primary-subtle: rgba(79, 70, 229, 0.08);
+      --accent: #06B6D4;
+      --accent-glow: rgba(6, 182, 212, 0.3);
+
+      --bg: #FFFFFF;
+      --bg-2: #F8FAFF;
+      --bg-3: #EEF2FF;
+      --surface: #FFFFFF;
+      --surface-2: rgba(255,255,255,0.7);
+      --border: rgba(0,0,0,0.07);
+      --border-strong: rgba(0,0,0,0.12);
+
+      --text: #0F172A;
+      --text-2: #334155;
+      --text-muted: #64748B;
+      --text-faint: #94A3B8;
+
+      --nav-bg: rgba(255,255,255,0.8);
+      --card-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+      --card-shadow-hover: 0 12px 40px rgba(79,70,229,0.14), 0 2px 8px rgba(0,0,0,0.06);
+
+      --radius-sm: 10px;
       --radius: 16px;
+      --radius-lg: 24px;
+      --radius-xl: 32px;
+
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
+    [data-theme="dark"] {
+      --primary: #6366F1;
+      --primary-light: #818CF8;
+      --primary-glow: rgba(99, 102, 241, 0.4);
+      --primary-subtle: rgba(99, 102, 241, 0.12);
+
+      --bg: #08081A;
+      --bg-2: #0E0E2A;
+      --bg-3: #13133A;
+      --surface: #13133A;
+      --surface-2: rgba(19,19,58,0.7);
+      --border: rgba(255,255,255,0.07);
+      --border-strong: rgba(255,255,255,0.12);
+
+      --text: #F1F5F9;
+      --text-2: #CBD5E1;
+      --text-muted: #94A3B8;
+      --text-faint: #64748B;
+
+      --nav-bg: rgba(8,8,26,0.85);
+      --card-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 1px 4px rgba(0,0,0,0.2);
+      --card-shadow-hover: 0 12px 40px rgba(99,102,241,0.2), 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    /* ═══════════════════════════════════════════
+       RESET & BASE
+    ═══════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
     body {
-      font-family: 'Inter', sans-serif;
-      color: var(--text);
+      font-family: var(--font);
       background: var(--bg);
+      color: var(--text);
       line-height: 1.6;
+      transition: background var(--transition), color var(--transition);
+      overflow-x: hidden;
     }
 
     a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
 
-    /* ── NAV ── */
-    nav {
-      position: sticky; top: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 5%;
-      background: rgba(255,255,255,0.9);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
+    /* ═══════════════════════════════════════════
+       UTILITIES
+    ═══════════════════════════════════════════ */
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 24px;
     }
-    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.2rem; }
-    .logo-icon {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: var(--blue);
-      display: flex; align-items: center; justify-content: center;
-      color: white; font-size: 1.1rem; font-weight: 800;
+
+    .section { padding: 96px 0; }
+    .section-sm { padding: 64px 0; }
+
+    .label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      background: var(--primary-subtle);
+      color: var(--primary-light);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
     }
-    .nav-links { display: flex; align-items: center; gap: 28px; font-size: 0.95rem; }
-    .nav-links a { color: var(--text-muted); transition: color 0.2s; }
-    .nav-links a:hover { color: var(--blue); }
+
+    .section-heading {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+
+    .section-sub {
+      margin-top: 16px;
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 540px;
+    }
+
+    .section-header { text-align: center; margin-bottom: 64px; }
+    .section-header .section-sub { margin-left: auto; margin-right: auto; }
+
+    /* Scroll-reveal */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ═══════════════════════════════════════════
+       BUTTONS
+    ═══════════════════════════════════════════ */
     .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 10px 22px; border-radius: 10px;
-      font-weight: 600; font-size: 0.95rem;
-      background: var(--blue); color: white;
-      transition: background 0.2s, transform 0.1s;
-      cursor: pointer; border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all var(--transition);
+      white-space: nowrap;
     }
-    .btn:hover { background: var(--blue-dark); transform: translateY(-1px); }
-    .btn-outline {
-      background: transparent; color: var(--blue);
-      border: 2px solid var(--blue);
-    }
-    .btn-outline:hover { background: var(--blue-light); transform: none; }
 
-    /* ── HERO ── */
-    .hero {
-      text-align: center;
-      padding: 100px 5% 80px;
-      background: linear-gradient(160deg, #f0f4ff 0%, #ffffff 60%);
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 4px 16px var(--primary-glow);
     }
-    .hero-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 6px 14px; border-radius: 20px;
-      background: var(--blue-light); color: var(--blue);
-      font-size: 0.85rem; font-weight: 600; margin-bottom: 24px;
+    .btn-primary:hover {
+      background: var(--primary-light);
+      box-shadow: 0 6px 24px var(--primary-glow);
+      transform: translateY(-1px);
     }
-    .hero h1 {
-      font-size: clamp(2.4rem, 5vw, 3.8rem);
-      font-weight: 800; line-height: 1.15;
-      letter-spacing: -0.02em; margin-bottom: 20px;
-    }
-    .hero h1 span { color: var(--blue); }
-    .hero p {
-      font-size: 1.15rem; color: var(--text-muted);
-      max-width: 540px; margin: 0 auto 28px;
-    }
-    .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-    .play-btn {
-      display: inline-flex; align-items: center; gap: 12px;
-      padding: 16px 32px; border-radius: 14px;
-      background: #000; color: white;
-      font-weight: 600; font-size: 1rem;
-      transition: background 0.2s, transform 0.1s;
-    }
-    .play-btn:hover { background: #222; transform: translateY(-2px); }
-    .play-btn img { width: 22px; }
-    .hero-actions { margin-bottom: 20px; }
-    .hero-sub { margin-top: 0; font-size: 0.85rem; color: var(--text-muted); }
 
-    /* ── PHONE MOCKUP ── */
-    .mockup-section {
-      display: flex; justify-content: center;
-      padding: 20px 5% 80px;
-      background: linear-gradient(180deg, #ffffff 0%, #f0f4ff 100%);
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-2);
+      border: 1.5px solid var(--border-strong);
     }
-    .phone {
-      width: 260px;
-      background: #1a1a2e;
-      border-radius: 40px;
-      padding: 12px;
-      box-shadow: 0 40px 80px rgba(61,90,254,0.25), 0 8px 24px rgba(0,0,0,0.15);
+    .btn-ghost:hover {
+      background: var(--primary-subtle);
+      border-color: var(--primary-light);
+      color: var(--primary-light);
     }
-    .phone-inner {
-      background: #f0f4ff;
-      border-radius: 30px;
-      overflow: hidden;
-      padding: 20px 16px;
+
+    /* Play Store badge */
+    .play-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 22px;
+      background: var(--text);
+      color: var(--bg);
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all var(--transition);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
     }
-    .phone-header {
-      background: linear-gradient(135deg, var(--blue), var(--blue-dark));
-      border-radius: 18px;
-      padding: 20px 16px;
-      color: white;
-      margin-bottom: 16px;
+    .play-badge:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.22);
     }
-    .phone-header .label { font-size: 0.7rem; opacity: 0.8; margin-bottom: 4px; }
-    .phone-header .amount { font-size: 1.8rem; font-weight: 800; }
-    .phone-header .yearly { font-size: 0.75rem; opacity: 0.75; margin-top: 2px; }
-    .phone-header .chips { display: flex; gap: 6px; margin-top: 10px; }
-    .chip {
-      background: rgba(255,255,255,0.2);
-      border-radius: 20px; padding: 3px 10px;
-      font-size: 0.68rem;
+    .play-badge svg { flex-shrink: 0; }
+    .play-badge span { display: flex; flex-direction: column; line-height: 1.2; }
+    .play-badge .pre { font-size: 0.65rem; font-weight: 400; opacity: 0.75; }
+    .play-badge .main { font-size: 1rem; font-weight: 700; }
+
+    /* ═══════════════════════════════════════════
+       NAVIGATION
+    ═══════════════════════════════════════════ */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      background: var(--nav-bg);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+      transition: background var(--transition), box-shadow var(--transition), padding var(--transition);
     }
-    .phone-section-title { font-size: 0.75rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
-    .sub-card {
-      background: white;
-      border-radius: 12px;
-      padding: 10px 12px;
-      margin-bottom: 6px;
+    nav.scrolled {
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 68px;
+    }
+
+    .nav-logo {
       display: flex;
       align-items: center;
       gap: 10px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+      color: var(--text);
     }
-    .sub-icon {
-      width: 32px; height: 32px; border-radius: 50%;
+    .nav-logo img {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      list-style: none;
+    }
+    .nav-links a {
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: color var(--transition), background var(--transition);
+    }
+    .nav-links a:hover {
+      color: var(--text);
+      background: var(--primary-subtle);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-strong);
+      background: transparent;
+      cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1rem;
+      font-size: 1.05rem;
+      transition: all var(--transition);
+      color: var(--text-muted);
     }
-    .sub-info { flex: 1; }
-    .sub-name { font-size: 0.72rem; font-weight: 600; }
-    .sub-cycle { font-size: 0.62rem; color: var(--text-muted); }
-    .sub-price { font-size: 0.75rem; font-weight: 700; color: var(--blue); }
+    .theme-toggle:hover {
+      background: var(--primary-subtle);
+      border-color: var(--primary-light);
+      color: var(--primary);
+    }
+    .theme-toggle .icon-sun { display: none; }
+    .theme-toggle .icon-moon { display: block; }
+    [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+    [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
 
-    /* ── STATS ── */
-    .stats {
-      display: flex; justify-content: center; gap: 0;
-      background: var(--blue);
-      flex-wrap: wrap;
+    /* Mobile nav toggle */
+    .nav-hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      padding: 6px;
+      border: none;
+      background: none;
     }
-    .stat {
-      flex: 1; min-width: 140px;
-      padding: 32px 24px; text-align: center;
-      border-right: 1px solid rgba(255,255,255,0.15);
-      color: white;
+    .nav-hamburger span {
+      display: block;
+      width: 22px; height: 2px;
+      background: var(--text);
+      border-radius: 2px;
+      transition: all 0.3s;
     }
-    .stat:last-child { border-right: none; }
-    .stat-num { font-size: 2rem; font-weight: 800; }
-    .stat-label { font-size: 0.85rem; opacity: 0.8; margin-top: 4px; }
 
-    /* ── FEATURES ── */
-    .features { padding: 80px 5%; }
-    .section-label {
-      font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em;
-      color: var(--blue); text-transform: uppercase; margin-bottom: 12px;
+    /* ═══════════════════════════════════════════
+       HERO
+    ═══════════════════════════════════════════ */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 80px 0 64px;
+      min-height: calc(100vh - 68px);
+      display: flex;
+      align-items: center;
     }
-    .section-title {
-      font-size: clamp(1.8rem, 3vw, 2.4rem);
-      font-weight: 800; line-height: 1.2;
-      letter-spacing: -0.02em; margin-bottom: 48px;
+
+    /* Animated gradient orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
     }
-    .features-grid {
+    .orb-1 {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(79,70,229,0.25) 0%, transparent 70%);
+      top: -200px; left: -100px;
+      animation: orbFloat1 12s ease-in-out infinite;
+    }
+    .orb-2 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(6,182,212,0.18) 0%, transparent 70%);
+      bottom: -100px; right: -100px;
+      animation: orbFloat2 15s ease-in-out infinite;
+    }
+    .orb-3 {
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%);
+      top: 40%; left: 50%;
+      animation: orbFloat3 10s ease-in-out infinite;
+    }
+
+    @keyframes orbFloat1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(40px, 30px) scale(1.05); }
+      66% { transform: translate(-20px, 50px) scale(0.95); }
+    }
+    @keyframes orbFloat2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-50px, -40px) scale(1.08); }
+    }
+    @keyframes orbFloat3 {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.5; }
+    }
+
+    /* Grid dots background */
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, var(--border-strong) 1px, transparent 1px);
+      background-size: 32px 32px;
+      opacity: 0.6;
+      z-index: 0;
+    }
+    [data-theme="dark"] .hero::before { opacity: 0.3; }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 64px;
     }
-    .feature-card {
-      background: var(--card-bg);
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: var(--primary-subtle);
+      border: 1px solid rgba(79,70,229,0.2);
+      border-radius: 99px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--primary-light);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .hero-eyebrow::before {
+      content: '';
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      box-shadow: 0 0 8px var(--primary-light);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.8); }
+    }
+
+    .hero-title {
+      font-size: clamp(2.4rem, 5vw, 3.8rem);
+      font-weight: 900;
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+      color: var(--text);
+      margin-bottom: 22px;
+    }
+    .hero-title .gradient-text {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-desc {
+      font-size: 1.08rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-bottom: 36px;
+      max-width: 480px;
+    }
+
+    .hero-cta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .hero-trust {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 28px;
+      font-size: 0.82rem;
+      color: var(--text-faint);
+    }
+    .hero-trust span { color: #F59E0B; font-size: 0.9rem; }
+
+    /* Phone mockup */
+    .hero-visual {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .phone-mockup {
+      width: 280px;
+      background: var(--text);
+      border-radius: 44px;
+      padding: 14px;
+      box-shadow:
+        0 30px 80px rgba(0,0,0,0.25),
+        0 8px 24px rgba(0,0,0,0.12),
+        inset 0 0 0 1px rgba(255,255,255,0.08);
+      animation: phoneFloat 5s ease-in-out infinite;
+      position: relative;
+      z-index: 2;
+    }
+    @keyframes phoneFloat {
+      0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+      50% { transform: translateY(-14px) rotate(1.5deg); }
+    }
+
+    .phone-screen {
+      background: var(--bg);
+      border-radius: 34px;
+      overflow: hidden;
+      aspect-ratio: 9/19.5;
+    }
+    [data-theme="dark"] .phone-screen { background: #0E0E2A; }
+
+    .phone-notch {
+      width: 90px; height: 28px;
+      background: var(--text);
+      border-radius: 0 0 18px 18px;
+      margin: 0 auto;
+    }
+    [data-theme="dark"] .phone-notch { background: #08081A; }
+
+    .phone-ui { padding: 14px 16px; }
+
+    .pui-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 14px;
+    }
+    .pui-greeting { font-size: 0.6rem; color: var(--text-muted); }
+    .pui-title { font-size: 0.9rem; font-weight: 800; color: var(--text); letter-spacing: -0.03em; }
+
+    .pui-card {
+      background: linear-gradient(135deg, var(--primary), #7C3AED);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .pui-card-label { font-size: 0.55rem; color: rgba(255,255,255,0.7); margin-bottom: 4px; }
+    .pui-card-amount { font-size: 1.4rem; font-weight: 800; color: white; letter-spacing: -0.03em; }
+    .pui-card-sub { font-size: 0.5rem; color: rgba(255,255,255,0.6); margin-top: 2px; }
+    .pui-card-row {
+      display: flex; justify-content: space-between;
+      margin-top: 12px; padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.15);
+    }
+    .pui-stat { font-size: 0.5rem; color: rgba(255,255,255,0.7); }
+    .pui-stat strong { display: block; font-size: 0.7rem; color: white; }
+
+    .pui-section-title { font-size: 0.58rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+
+    .pui-sub-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .pui-sub-item:last-child { border-bottom: none; }
+    .pui-icon {
+      width: 24px; height: 24px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; flex-shrink: 0;
+    }
+    .pui-sub-name { font-size: 0.58rem; font-weight: 600; color: var(--text); flex: 1; }
+    .pui-sub-amount { font-size: 0.58rem; font-weight: 700; color: var(--primary); }
+    .pui-sub-date { font-size: 0.48rem; color: var(--text-muted); }
+    .pui-renew-badge {
+      font-size: 0.42rem; padding: 2px 5px;
+      border-radius: 4px; background: rgba(239,68,68,0.1); color: #EF4444;
+      font-weight: 600;
+    }
+
+    /* Floating badges around phone */
+    .float-badge {
+      position: absolute;
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 28px;
-      transition: transform 0.2s, box-shadow 0.2s;
+      padding: 10px 14px;
+      box-shadow: var(--card-shadow);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      z-index: 3;
     }
-    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(61,90,254,0.1); }
-    .feature-emoji { font-size: 2rem; margin-bottom: 14px; }
-    .feature-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
-    .feature-desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; }
+    .float-badge .badge-icon { font-size: 1.1rem; }
 
-    /* ── HOW IT WORKS ── */
-    .how { padding: 80px 5%; background: var(--card-bg); }
-    .steps {
+    .badge-sms {
+      top: 60px; right: -40px;
+      animation: badgeFloat1 4s ease-in-out infinite;
+    }
+    .badge-save {
+      bottom: 100px; left: -60px;
+      animation: badgeFloat2 5s ease-in-out 1s infinite;
+    }
+    .badge-secure {
+      bottom: 30px; right: -30px;
+      animation: badgeFloat3 4.5s ease-in-out 0.5s infinite;
+    }
+
+    @keyframes badgeFloat1 {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    @keyframes badgeFloat2 {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(8px); }
+    }
+    @keyframes badgeFloat3 {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-6px) rotate(-2deg); }
+    }
+
+    /* ═══════════════════════════════════════════
+       STATS BAR
+    ═══════════════════════════════════════════ */
+    .stats-bar {
+      background: linear-gradient(135deg, var(--primary) 0%, #7C3AED 100%);
+      padding: 48px 0;
+    }
+
+    .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 32px; margin-top: 48px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      text-align: center;
     }
-    .step { text-align: center; }
-    .step-num {
-      width: 48px; height: 48px; border-radius: 50%;
-      background: var(--blue); color: white;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 1.1rem;
-      margin: 0 auto 16px;
-    }
-    .step-title { font-weight: 700; font-size: 1rem; margin-bottom: 8px; }
-    .step-desc { font-size: 0.88rem; color: var(--text-muted); }
 
-    /* ── SMS HIGHLIGHT ── */
-    .sms-section {
-      padding: 80px 5%;
-      display: flex; align-items: center; gap: 60px;
-      flex-wrap: wrap;
+    .stat-item {
+      color: white;
     }
-    .sms-content { flex: 1; min-width: 280px; }
-    .sms-content h2 { font-size: 2rem; font-weight: 800; margin-bottom: 16px; letter-spacing: -0.02em; }
-    .sms-content p { color: var(--text-muted); margin-bottom: 24px; line-height: 1.7; }
-    .sms-bubble-container { flex: 1; min-width: 280px; }
-    .sms-bubble {
-      background: white;
+    .stat-num {
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .stat-label {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.7);
+      font-weight: 500;
+    }
+
+    .stat-divider {
+      width: 1px;
+      background: rgba(255,255,255,0.2);
+      align-self: stretch;
+    }
+
+    /* ═══════════════════════════════════════════
+       FEATURES
+    ═══════════════════════════════════════════ */
+    .features-bg {
+      background: var(--bg-2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 16px 20px;
-      margin-bottom: 12px;
-      font-size: 0.88rem;
+      border-radius: var(--radius-lg);
+      padding: 32px 28px;
+      position: relative;
+      overflow: hidden;
+      transition: all var(--transition);
+      cursor: default;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+    .feature-card:hover::before { transform: scaleX(1); }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--card-shadow-hover);
+      border-color: rgba(79,70,229,0.2);
+    }
+
+    .feature-icon-wrap {
+      width: 52px; height: 52px;
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem;
+      margin-bottom: 20px;
+      background: var(--primary-subtle);
+    }
+
+    .feature-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
+
+    .feature-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+
+    /* Large feature card */
+    .feature-card.large {
+      grid-column: span 2;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: center;
+      background: linear-gradient(135deg, var(--bg-3) 0%, var(--surface) 100%);
+    }
+    .feature-card.large .feature-visual {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .sms-snippet {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: 'Courier New', monospace;
       line-height: 1.5;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .sms-snippet .highlight { color: var(--primary); font-weight: 700; }
+
+    .detected-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.25);
+      border-radius: 99px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #059669;
+      align-self: flex-start;
+    }
+
+    /* ═══════════════════════════════════════════
+       HOW IT WORKS
+    ═══════════════════════════════════════════ */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
       position: relative;
     }
-    .sms-sender { font-size: 0.72rem; font-weight: 700; color: var(--blue); margin-bottom: 4px; }
-    .sms-detected {
-      display: inline-flex; align-items: center; gap: 6px;
-      margin-top: 10px; padding: 4px 10px;
-      background: #dcfce7; color: #16a34a;
-      border-radius: 20px; font-size: 0.75rem; font-weight: 600;
-    }
-    .highlight { color: var(--blue); font-weight: 700; }
-
-    /* ── PRIVACY ── */
-    .privacy {
-      padding: 80px 5%;
-      background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
-      text-align: center; color: white;
-    }
-    .privacy h2 { font-size: 2rem; font-weight: 800; margin-bottom: 16px; }
-    .privacy p { opacity: 0.85; max-width: 540px; margin: 0 auto 40px; font-size: 1rem; }
-    .privacy-items {
-      display: flex; justify-content: center; flex-wrap: wrap; gap: 16px;
-      max-width: 700px; margin: 0 auto;
-    }
-    .privacy-item {
-      background: rgba(255,255,255,0.15);
-      border-radius: 10px; padding: 10px 18px;
-      font-size: 0.9rem; font-weight: 500;
-      backdrop-filter: blur(4px);
+    .steps-grid::before {
+      content: '';
+      position: absolute;
+      top: 32px;
+      left: calc(12.5% + 26px);
+      right: calc(12.5% + 26px);
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      z-index: 0;
     }
 
-    /* ── CTA ── */
-    .cta {
-      padding: 80px 5%; text-align: center;
+    .step-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
     }
-    .cta h2 { font-size: 2rem; font-weight: 800; margin-bottom: 12px; }
-    .cta p { color: var(--text-muted); margin-bottom: 32px; }
 
-    /* ── FOOTER ── */
-    footer {
-      padding: 32px 5%;
+    .step-num {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 2px solid var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: var(--primary);
+      box-shadow: 0 0 0 6px var(--bg), 0 0 0 8px rgba(79,70,229,0.15);
+      transition: all var(--transition);
+    }
+    .step-card:hover .step-num {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 0 0 6px var(--bg), 0 8px 24px var(--primary-glow);
+    }
+
+    .step-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .step-desc {
+      font-size: 0.83rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ═══════════════════════════════════════════
+       SMS DEMO
+    ═══════════════════════════════════════════ */
+    .sms-demo-section {
+      background: var(--bg-2);
       border-top: 1px solid var(--border);
-      display: flex; justify-content: space-between; align-items: center;
-      flex-wrap: wrap; gap: 16px;
-      font-size: 0.85rem; color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
     }
-    .footer-links { display: flex; gap: 20px; }
-    .footer-links a:hover { color: var(--blue); }
 
-    /* ── RESPONSIVE ── */
-    @media (max-width: 640px) {
+    .sms-demo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+    }
+
+    .sms-demo-text .section-sub { max-width: 420px; }
+
+    .sms-items { display: flex; flex-direction: column; gap: 10px; }
+
+    .sms-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: center;
+      opacity: 0;
+      transform: translateX(30px);
+      transition: opacity 0.5s ease, transform 0.5s ease, box-shadow var(--transition);
+    }
+    .sms-item.animate-in {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .sms-item:hover { box-shadow: var(--card-shadow-hover); }
+
+    .sms-sender-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--bg-3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 0.02em;
+      flex-shrink: 0;
+    }
+
+    .sms-sender { font-size: 0.78rem; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+    .sms-body { font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; }
+    .sms-body em { font-style: normal; color: var(--primary); font-weight: 600; }
+
+    .sms-result {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .sms-amount { font-size: 0.88rem; font-weight: 800; color: var(--primary); }
+    .sms-service {
+      font-size: 0.65rem; font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+      background: rgba(16,185,129,0.1);
+      color: #059669;
+    }
+
+    /* ═══════════════════════════════════════════
+       PRIVACY
+    ═══════════════════════════════════════════ */
+    .privacy-section {
+      background: linear-gradient(160deg, #0A0A1E 0%, #130D35 50%, #0A1628 100%);
+      padding: 96px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .privacy-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 60% at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 70%);
+    }
+    .privacy-section .section-heading { color: #F1F5F9; }
+    .privacy-section .section-sub { color: #94A3B8; }
+
+    .privacy-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .privacy-item {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      transition: all var(--transition);
+    }
+    .privacy-item:hover {
+      background: rgba(99,102,241,0.08);
+      border-color: rgba(99,102,241,0.25);
+      transform: translateY(-2px);
+    }
+    .privacy-item-icon { font-size: 1.8rem; margin-bottom: 14px; }
+    .privacy-item-title { font-size: 0.95rem; font-weight: 700; color: #F1F5F9; margin-bottom: 8px; }
+    .privacy-item-desc { font-size: 0.83rem; color: #64748B; line-height: 1.6; }
+
+    /* ═══════════════════════════════════════════
+       CTA
+    ═══════════════════════════════════════════ */
+    .cta-section { padding: 96px 0; }
+
+    .cta-card {
+      background: linear-gradient(135deg, var(--primary) 0%, #7C3AED 50%, var(--accent) 100%);
+      border-radius: var(--radius-xl);
+      padding: 72px 64px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 80% at 50% -20%, rgba(255,255,255,0.15) 0%, transparent 60%);
+    }
+    .cta-card > * { position: relative; z-index: 1; }
+
+    .cta-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 900;
+      color: white;
+      letter-spacing: -0.04em;
+      margin-bottom: 16px;
+    }
+    .cta-desc {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.78);
+      margin-bottom: 36px;
+      max-width: 480px;
+      margin-left: auto; margin-right: auto;
+    }
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 28px;
+      background: white;
+      color: var(--primary);
+      border-radius: var(--radius);
+      font-weight: 700;
+      font-size: 0.95rem;
+      transition: all var(--transition);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    .cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+    }
+    .cta-note {
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.55);
+    }
+
+    /* ═══════════════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════════════ */
+    footer {
+      background: var(--bg-2);
+      border-top: 1px solid var(--border);
+      padding: 64px 0 32px;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 48px;
+    }
+
+    .footer-brand p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+      margin-top: 12px;
+      max-width: 240px;
+    }
+
+    .footer-social {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .social-link {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      transition: all var(--transition);
+    }
+    .social-link:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+      transform: translateY(-2px);
+    }
+    .social-link svg { width: 16px; height: 16px; fill: currentColor; }
+
+    .footer-col-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 16px;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      list-style: none;
+    }
+    .footer-links a {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      transition: color var(--transition);
+    }
+    .footer-links a:hover { color: var(--primary); }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 28px;
+      border-top: 1px solid var(--border);
+      font-size: 0.82rem;
+      color: var(--text-faint);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    /* ═══════════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════════ */
+    @media (max-width: 1024px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .feature-card.large { grid-column: span 2; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      .steps-grid::before { display: none; }
+    }
+
+    @media (max-width: 768px) {
+      .section { padding: 64px 0; }
+      .section-sm { padding: 48px 0; }
+
       .nav-links { display: none; }
-      .stats { flex-direction: column; }
-      .stat { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.15); }
-      .sms-section { flex-direction: column; }
+      .nav-hamburger { display: flex; }
+      nav.menu-open .nav-links {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 100%; left: 0; right: 0;
+        background: var(--nav-bg);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+        padding: 16px 24px 20px;
+        gap: 4px;
+      }
+      nav.menu-open { position: fixed; width: 100%; }
+
+      .hero { padding: 48px 0 40px; min-height: auto; }
+      .hero-inner {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 48px;
+      }
+      .hero-desc { margin-left: auto; margin-right: auto; }
+      .hero-cta { justify-content: center; }
+      .hero-trust { justify-content: center; }
+      .hero-visual { display: none; }
+
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .stat-divider { display: none; }
+
+      .features-grid { grid-template-columns: 1fr; }
+      .feature-card.large {
+        grid-column: span 1;
+        grid-template-columns: 1fr;
+      }
+
+      .steps-grid { grid-template-columns: repeat(2, 1fr); gap: 32px; }
+
+      .sms-demo-grid { grid-template-columns: 1fr; gap: 40px; }
+
+      .privacy-grid { grid-template-columns: 1fr; }
+
+      .cta-card { padding: 48px 24px; }
+
+      .footer-grid { grid-template-columns: 1fr; gap: 32px; }
+      .footer-bottom { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (max-width: 480px) {
+      .steps-grid { grid-template-columns: 1fr; }
+      .badge-sms, .badge-save, .badge-secure { display: none; }
     }
   </style>
 </head>
+
 <body>
 
-<!-- NAV -->
-<nav>
-  <div class="nav-logo">
-    <img src="icon_512.png" alt="SubTrack" style="width:36px;height:36px;border-radius:10px;" />
-    SubTrack
-  </div>
-  <div class="nav-links">
-    <a href="#features">Features</a>
-    <a href="#how">How it works</a>
-    <a href="#privacy">Privacy</a>
-    <a href="https://gist.github.com/ug2454/c49d37a6181a36ce8a308140dd946e9a" target="_blank">Privacy Policy</a>
-  </div>
-  <a href="https://play.google.com/store/apps/details?id=com.mecazor.subtracker&pcampaignid=web_share" class="btn" target="_blank">Get the App</a>
-</nav>
+  <!-- ═══════════════════════════════════════════
+       NAVIGATION
+  ═══════════════════════════════════════════ -->
+  <nav id="mainNav">
+    <div class="container">
+      <div class="nav-inner">
+        <a href="#" class="nav-logo">
+          <img src="icon_512.png" alt="SubTrack" />
+          SubTrack
+        </a>
 
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-badge">🇮🇳 Made for India</div>
-  <h1>Know what you pay.<br /><span>Every month.</span></h1>
-  <p>SubTrack automatically detects your subscriptions from bank SMS and shows you exactly where your money goes.</p>
-  <div class="hero-actions">
-    <a href="https://play.google.com/store/apps/details?id=com.mecazor.subtracker&pcampaignid=web_share" class="play-btn" target="_blank" id="download">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M3.18 23.76c.33.18.7.2 1.05.06l11.84-6.84-2.49-2.49-10.4 9.27zM20.7 9.56L5.42.54C5.06.33 4.66.32 4.32.5L14.77 11l5.93-1.44zM22.1 11.07l-3.38-1.95-2.78 2.78 2.78 2.78 3.41-1.97c.97-.56.97-2.08-.03-2.64zM4.32 23.5c.34.18.74.17 1.1-.04L20.7 14.44 14.77 13 4.32 23.5z"/></svg>
-      Google Play
-    </a>
-  </div>
-  <p class="hero-sub">Android 8.0+ · 100% offline · No account needed</p>
-</section>
+        <ul class="nav-links" id="navLinks">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how-it-works">How it works</a></li>
+          <li><a href="#sms-demo">SMS Detection</a></li>
+          <li><a href="#privacy">Privacy</a></li>
+        </ul>
 
-<!-- PHONE MOCKUP -->
-<div class="mockup-section">
-  <div class="phone">
-    <div class="phone-inner">
-      <div class="phone-header">
-        <div class="label">Subscription Tracker</div>
-        <div class="amount">₹1,854 / mo</div>
-        <div class="yearly">₹22,248 per year</div>
-        <div class="chips">
-          <div class="chip">7 Active</div>
-          <div class="chip">2 Renewing Soon</div>
+        <div class="nav-actions">
+          <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+            <span class="icon-moon">🌙</span>
+            <span class="icon-sun">☀️</span>
+          </button>
+          <a href="https://play.google.com/store/apps/details?id=com.mecazor.subtracker&pcampaignid=web_share"
+             class="btn btn-primary" target="_blank" rel="noopener">
+            Get the App
+          </a>
+          <button class="nav-hamburger" id="navHamburger" aria-label="Menu">
+            <span></span><span></span><span></span>
+          </button>
         </div>
       </div>
-      <div class="phone-section-title">Upcoming Renewals</div>
-      <div class="sub-card">
-        <div class="sub-icon" style="background:#fff0f3">🎬</div>
-        <div class="sub-info"><div class="sub-name">Netflix</div><div class="sub-cycle">Monthly · 3 days</div></div>
-        <div class="sub-price">₹649</div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════
+       HERO
+  ═══════════════════════════════════════════ -->
+  <section class="hero">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="container">
+      <div class="hero-inner">
+
+        <!-- Text -->
+        <div class="hero-text">
+          <div class="hero-eyebrow">100% free · no account needed</div>
+          <h1 class="hero-title">
+            Know exactly what<br/>you pay,
+            <span class="gradient-text">every month.</span>
+          </h1>
+          <p class="hero-desc">
+            SubTrack scans your bank SMS to automatically detect Netflix, Spotify, Hotstar and 45+ subscription services — no manual entry, no data upload, no internet required.
+          </p>
+          <div class="hero-cta">
+            <a href="https://play.google.com/store/apps/details?id=com.mecazor.subtracker&pcampaignid=web_share"
+               class="play-badge" target="_blank" rel="noopener">
+              <!-- Google Play icon -->
+              <svg width="22" height="22" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                <path d="M48 32C21.5 32 0 53.5 0 80v352c0 26.5 21.5 48 48 48h16V32H48zm416 0h-16v400h16c26.5 0 48-21.5 48-48V80c0-26.5-21.5-48-48-48zM96 32v400l192-108.3V140.3L96 32zm204.4 156.5l51.5 29-51.5 29v-58z" fill="currentColor"/>
+              </svg>
+              <span>
+                <span class="pre">Download on</span>
+                <span class="main">Google Play</span>
+              </span>
+            </a>
+            <a href="#features" class="btn btn-ghost">See features →</a>
+          </div>
+          <div class="hero-trust">
+            <span>★★★★★</span>
+            Free forever · 100% offline
+          </div>
+        </div>
+
+        <!-- Phone mockup -->
+        <div class="hero-visual">
+          <div class="float-badge badge-sms">
+            <span class="badge-icon">📩</span>
+            SMS scanned
+          </div>
+          <div class="float-badge badge-save">
+            <span class="badge-icon">💰</span>
+            ₹1,849/mo saved
+          </div>
+          <div class="float-badge badge-secure">
+            <span class="badge-icon">🔒</span>
+            100% offline
+          </div>
+
+          <div class="phone-mockup">
+            <div class="phone-screen">
+              <div class="phone-notch"></div>
+              <div class="phone-ui">
+                <div class="pui-header">
+                  <div>
+                    <div class="pui-greeting">Good morning 👋</div>
+                    <div class="pui-title">SubTrack</div>
+                  </div>
+                  <div style="font-size:18px">🔔</div>
+                </div>
+
+                <div class="pui-card">
+                  <div class="pui-card-label">This month's spend</div>
+                  <div class="pui-card-amount">₹3,847</div>
+                  <div class="pui-card-sub">6 active subscriptions</div>
+                  <div class="pui-card-row">
+                    <div class="pui-stat"><strong>₹46,164</strong>Yearly total</div>
+                    <div class="pui-stat"><strong>₹2,980</strong>Last month</div>
+                    <div class="pui-stat"><strong>+29%</strong>Change</div>
+                  </div>
+                </div>
+
+                <div class="pui-section-title">Subscriptions</div>
+
+                <div class="pui-sub-item">
+                  <div class="pui-icon" style="background:rgba(229,9,20,0.12)">🎬</div>
+                  <div style="flex:1">
+                    <div class="pui-sub-name">Netflix</div>
+                    <div class="pui-sub-date">Renews Jun 15</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div class="pui-sub-amount">₹649</div>
+                    <div class="pui-renew-badge">3 days</div>
+                  </div>
+                </div>
+
+                <div class="pui-sub-item">
+                  <div class="pui-icon" style="background:rgba(30,215,96,0.12)">🎵</div>
+                  <div style="flex:1">
+                    <div class="pui-sub-name">Spotify</div>
+                    <div class="pui-sub-date">Renews Jun 22</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div class="pui-sub-amount">₹119</div>
+                  </div>
+                </div>
+
+                <div class="pui-sub-item">
+                  <div class="pui-icon" style="background:rgba(0,180,216,0.12)">📺</div>
+                  <div style="flex:1">
+                    <div class="pui-sub-name">Hotstar</div>
+                    <div class="pui-sub-date">Renews Jul 1</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div class="pui-sub-amount">₹299</div>
+                  </div>
+                </div>
+
+                <div class="pui-sub-item">
+                  <div class="pui-icon" style="background:rgba(79,70,229,0.12)">🤖</div>
+                  <div style="flex:1">
+                    <div class="pui-sub-name">Claude AI</div>
+                    <div class="pui-sub-date">Renews Jun 18</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div class="pui-sub-amount">$20</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
-      <div class="sub-card">
-        <div class="sub-icon" style="background:#f0fdf4">🎵</div>
-        <div class="sub-info"><div class="sub-name">Spotify</div><div class="sub-cycle">Monthly · 7 days</div></div>
-        <div class="sub-price">₹119</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       STATS BAR
+  ═══════════════════════════════════════════ -->
+  <section class="stats-bar">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item reveal">
+          <div class="stat-num">45+</div>
+          <div class="stat-label">Auto-detected services</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item reveal" style="transition-delay:0.1s">
+          <div class="stat-num">0</div>
+          <div class="stat-label">Bytes sent to the internet</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item reveal" style="transition-delay:0.2s">
+          <div class="stat-num">13mo</div>
+          <div class="stat-label">Of SMS history scanned</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item reveal" style="transition-delay:0.3s">
+          <div class="stat-num">Free</div>
+          <div class="stat-label">Forever, no subscription</div>
+        </div>
       </div>
-      <div style="height:10px"></div>
-      <div class="phone-section-title">All Subscriptions</div>
-      <div class="sub-card">
-        <div class="sub-icon" style="background:#fff7ed">🎬</div>
-        <div class="sub-info"><div class="sub-name">Hotstar</div><div class="sub-cycle">Monthly</div></div>
-        <div class="sub-price">₹299</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       FEATURES
+  ═══════════════════════════════════════════ -->
+  <section class="section features-bg" id="features">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="label">✦ Features</div>
+        <h2 class="section-heading">Everything you need.<br/>Nothing you don't.</h2>
+        <p class="section-sub">Built for simplicity. Powerful enough to catch what you forgot you were paying for.</p>
       </div>
-      <div class="sub-card">
-        <div class="sub-icon" style="background:#eff6ff">☁️</div>
-        <div class="sub-info"><div class="sub-name">Google One</div><div class="sub-cycle">Monthly</div></div>
-        <div class="sub-price">₹130</div>
+
+      <div class="features-grid">
+
+        <!-- Large card: SMS detection -->
+        <div class="feature-card large reveal">
+          <div>
+            <div class="feature-icon-wrap">📱</div>
+            <h3 class="feature-title">Auto-detect from SMS</h3>
+            <p class="feature-desc">
+              SubTrack reads your bank's debit alerts and instantly identifies subscription payments — no manual entry required. Supports HDFC, ICICI, SBI, Axis, Kotak and more.
+            </p>
+          </div>
+          <div class="feature-visual">
+            <div class="sms-snippet">
+              <strong>HDFCBK:</strong> INR <span class="highlight">649.00</span> debited from a/c <span class="highlight">XX4821</span> to <span class="highlight">NETFLIX</span> via mandate on 15-06-26.
+            </div>
+            <div class="detected-chip">✅ Netflix · ₹649/mo detected</div>
+            <div class="sms-snippet">
+              <strong>ICICIBK:</strong> Rs <span class="highlight">119</span> debited from your ICICI Bank A/c XX7734 for <span class="highlight">Spotify</span> on 22-06-26.
+            </div>
+            <div class="detected-chip">✅ Spotify · ₹119/mo detected</div>
+          </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div class="feature-card reveal" style="transition-delay:0.1s">
+          <div class="feature-icon-wrap">📊</div>
+          <h3 class="feature-title">Instant Dashboard</h3>
+          <p class="feature-desc">Monthly and yearly totals at a glance. Sort by cost, name, or renewal date. See exactly what's draining your wallet.</p>
+        </div>
+
+        <!-- Reminders -->
+        <div class="feature-card reveal" style="transition-delay:0.15s">
+          <div class="feature-icon-wrap">🔔</div>
+          <h3 class="feature-title">Renewal Reminders</h3>
+          <p class="feature-desc">Never get surprised by a charge again. Set custom reminder days before any subscription renews and get a push notification.</p>
+        </div>
+
+        <!-- Multi-currency -->
+        <div class="feature-card reveal" style="transition-delay:0.2s">
+          <div class="feature-icon-wrap">💱</div>
+          <h3 class="feature-title">Multi-currency</h3>
+          <p class="feature-desc">INR, USD, EUR and more. USD-billed services like Claude AI, ChatGPT, and Copilot are detected and stored with the correct currency automatically.</p>
+        </div>
+
+        <!-- Pause & manage -->
+        <div class="feature-card reveal" style="transition-delay:0.25s">
+          <div class="feature-icon-wrap">⏸️</div>
+          <h3 class="feature-title">Pause & Manage</h3>
+          <p class="feature-desc">Long-press any subscription to pause, resume, or delete it — with haptic feedback and a spring animation. Undo delete with a single tap.</p>
+        </div>
+
       </div>
     </div>
-  </div>
-</div>
+  </section>
 
-<!-- STATS -->
-<div class="stats">
-  <div class="stat"><div class="stat-num">45+</div><div class="stat-label">Services detected</div></div>
-  <div class="stat"><div class="stat-num">₹3,200</div><div class="stat-label">Avg. monthly spend found</div></div>
-  <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Offline & private</div></div>
-  <div class="stat"><div class="stat-num">0</div><div class="stat-label">Data collected</div></div>
-</div>
+  <!-- ═══════════════════════════════════════════
+       HOW IT WORKS
+  ═══════════════════════════════════════════ -->
+  <section class="section" id="how-it-works">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="label">✦ How it works</div>
+        <h2 class="section-heading">Up and running in 30 seconds.</h2>
+        <p class="section-sub">Four steps, zero cloud, completely private.</p>
+      </div>
 
-<!-- FEATURES -->
-<section class="features" id="features">
-  <div class="section-label">Features</div>
-  <div class="section-title">Everything you need to<br />stop overpaying</div>
-  <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-emoji">📱</div>
-      <div class="feature-title">Auto-detect from SMS</div>
-      <div class="feature-desc">Scans your bank debit messages to find Netflix, Spotify, Hotstar and 45+ services automatically. No manual entry needed.</div>
+      <div class="steps-grid">
+        <div class="step-card reveal">
+          <div class="step-num">1</div>
+          <div>
+            <div class="step-title">Install the app</div>
+            <div class="step-desc">Download SubTrack free from Google Play. No account, no sign-up required.</div>
+          </div>
+        </div>
+        <div class="step-card reveal" style="transition-delay:0.1s">
+          <div class="step-num">2</div>
+          <div>
+            <div class="step-title">Grant SMS permission</div>
+            <div class="step-desc">Allow one-time read access so SubTrack can scan your bank debit messages on-device.</div>
+          </div>
+        </div>
+        <div class="step-card reveal" style="transition-delay:0.2s">
+          <div class="step-num">3</div>
+          <div>
+            <div class="step-title">Review detections</div>
+            <div class="step-desc">SubTrack lists every subscription it found. Select the ones you want and tap Import.</div>
+          </div>
+        </div>
+        <div class="step-card reveal" style="transition-delay:0.3s">
+          <div class="step-num">4</div>
+          <div>
+            <div class="step-title">Stay in control</div>
+            <div class="step-desc">Get reminders, track totals, pause subscriptions — all stored locally on your phone.</div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="feature-card">
-      <div class="feature-emoji">📊</div>
-      <div class="feature-title">Monthly & yearly totals</div>
-      <div class="feature-desc">See your exact subscription spend per month and per year in ₹. Know the real cost of your digital life.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-emoji">🔔</div>
-      <div class="feature-title">Renewal reminders</div>
-      <div class="feature-desc">Get notified days before a subscription renews. Cancel what you don't need before you're charged.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-emoji">🗂️</div>
-      <div class="feature-title">Organised by category</div>
-      <div class="feature-desc">Streaming, music, software, fitness, gaming — see exactly which category is eating your budget.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-emoji">💱</div>
-      <div class="feature-title">Multi-currency</div>
-      <div class="feature-desc">Supports INR, USD, EUR, GBP and more. Perfect if you have international subscriptions.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-emoji">🔒</div>
-      <div class="feature-title">Completely offline</div>
-      <div class="feature-desc">No account. No internet. No tracking. Your subscription data never leaves your phone.</div>
-    </div>
-  </div>
-</section>
+  </section>
 
-<!-- HOW IT WORKS -->
-<section class="how" id="how">
-  <div class="section-label">How it works</div>
-  <div class="section-title">Up and running in 30 seconds</div>
-  <div class="steps">
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-title">Install the app</div>
-      <div class="step-desc">Download SubTrack from Google Play. No sign-up required.</div>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-title">Tap "Scan SMS"</div>
-      <div class="step-desc">Allow SMS access. SubTrack scans your last 13 months of bank messages.</div>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-title">Review & import</div>
-      <div class="step-desc">See all detected subscriptions with amounts. Tap Import — done.</div>
-    </div>
-    <div class="step">
-      <div class="step-num">4</div>
-      <div class="step-title">Stay in control</div>
-      <div class="step-desc">Get renewal reminders. Cancel forgotten subscriptions. Save money.</div>
-    </div>
-  </div>
-</section>
+  <!-- ═══════════════════════════════════════════
+       SMS DETECTION DEMO
+  ═══════════════════════════════════════════ -->
+  <section class="section sms-demo-section" id="sms-demo">
+    <div class="container">
+      <div class="sms-demo-grid">
 
-<!-- SMS HIGHLIGHT -->
-<section class="sms-section">
-  <div class="sms-content">
-    <div class="section-label">SMS Detection</div>
-    <h2>Your bank already knows.<br />Now you will too.</h2>
-    <p>Every time you're charged for a subscription, your bank sends you an SMS. SubTrack reads those messages locally on your device and automatically builds your subscription list — with the exact amount you paid.</p>
-    <p>Netflix, Spotify, Hotstar, Amazon Prime, Google One, Swiggy One and 40+ more services are recognised automatically.</p>
-    <a href="#download" class="btn">Try it free →</a>
-  </div>
-  <div class="sms-bubble-container">
-    <div class="sms-bubble">
-      <div class="sms-sender">VM-HDFCBK</div>
-      INR <span class="highlight">649.00</span> debited from A/c XX1234 on 16-04-26 for <span class="highlight">NETFLIX</span>. Avl bal: INR 12,450.00
-      <div class="sms-detected">✓ Netflix detected — ₹649/mo</div>
+        <div class="sms-demo-text reveal">
+          <div class="label">✦ Smart SMS Parser</div>
+          <h2 class="section-heading">Reads your bank SMS.<br/>Instantly.</h2>
+          <p class="section-sub">
+            SubTrack's parser understands 45+ subscription services across all major Indian banks. It reads the payment amount, the service name, and the billing date — directly from your SMS inbox.
+          </p>
+          <br/>
+          <a href="https://play.google.com/store/apps/details?id=com.mecazor.subtracker&pcampaignid=web_share"
+             class="btn btn-primary" target="_blank" rel="noopener" style="margin-top:8px">
+            Try it now →
+          </a>
+        </div>
+
+        <div class="sms-items" id="smsItems">
+
+          <div class="sms-item">
+            <div class="sms-sender-avatar">HDFC</div>
+            <div>
+              <div class="sms-sender">HDFCBK</div>
+              <div class="sms-body">INR <em>649.00</em> debited from a/c XX4821 to <em>NETFLIX</em> via mandate on 15-06-26.</div>
+            </div>
+            <div class="sms-result">
+              <div class="sms-amount">₹649</div>
+              <div class="sms-service">Netflix</div>
+            </div>
+          </div>
+
+          <div class="sms-item">
+            <div class="sms-sender-avatar">ICICI</div>
+            <div>
+              <div class="sms-sender">ICICIBK</div>
+              <div class="sms-body">Rs <em>119</em> debited from ICICI Bank A/c XX7734 for <em>Spotify</em> on 22-06-26.</div>
+            </div>
+            <div class="sms-result">
+              <div class="sms-amount">₹119</div>
+              <div class="sms-service">Spotify</div>
+            </div>
+          </div>
+
+          <div class="sms-item">
+            <div class="sms-sender-avatar">AXSB</div>
+            <div>
+              <div class="sms-sender">AXSB</div>
+              <div class="sms-body">₹<em>299</em> debited via NACH mandate to <em>HOTSTAR</em>-STAR INDIA on 01-07-26.</div>
+            </div>
+            <div class="sms-result">
+              <div class="sms-amount">₹299</div>
+              <div class="sms-service">Hotstar</div>
+            </div>
+          </div>
+
+          <div class="sms-item">
+            <div class="sms-sender-avatar">KOTAK</div>
+            <div>
+              <div class="sms-sender">KOTAKB</div>
+              <div class="sms-body">Your a/c is debited with <em>USD 20.00</em> for <em>ANTHROPIC</em> CLAUDE on 18-06-26.</div>
+            </div>
+            <div class="sms-result">
+              <div class="sms-amount">$20</div>
+              <div class="sms-service">Claude AI</div>
+            </div>
+          </div>
+
+          <div class="sms-item">
+            <div class="sms-sender-avatar">SBI</div>
+            <div>
+              <div class="sms-sender">SBIINB</div>
+              <div class="sms-body">Dear Customer, INR <em>199.00</em> debited from SBI A/c XX2198 for <em>GOOGLE PLAY</em> mandate.</div>
+            </div>
+            <div class="sms-result">
+              <div class="sms-amount">₹199</div>
+              <div class="sms-service">Google Play</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
-    <div class="sms-bubble">
-      <div class="sms-sender">VM-ICICIB</div>
-      Rs.<span class="highlight">119.00</span> debited from your ICICI Bank A/c XX5678. Info: <span class="highlight">SPOTIFY</span> INDIA
-      <div class="sms-detected">✓ Spotify detected — ₹119/mo</div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       PRIVACY
+  ═══════════════════════════════════════════ -->
+  <section class="privacy-section" id="privacy">
+    <div class="container">
+      <div class="section-header reveal" style="position:relative;z-index:1">
+        <div class="label" style="background:rgba(99,102,241,0.15);color:#818CF8">🔒 Privacy First</div>
+        <h2 class="section-heading">Your data stays on your phone.<br/>Always.</h2>
+        <p class="section-sub" style="margin-left:auto;margin-right:auto">
+          SubTrack has no internet permission. Your SMS, your subscriptions, and your spending data never leave your device.
+        </p>
+      </div>
+
+      <div class="privacy-grid">
+        <div class="privacy-item reveal">
+          <div class="privacy-item-icon">🚫</div>
+          <div class="privacy-item-title">No Internet Permission</div>
+          <div class="privacy-item-desc">The app's AndroidManifest declares zero internet permissions. It is physically incapable of sending data anywhere.</div>
+        </div>
+        <div class="privacy-item reveal" style="transition-delay:0.1s">
+          <div class="privacy-item-icon">📱</div>
+          <div class="privacy-item-title">On-Device Processing</div>
+          <div class="privacy-item-desc">All SMS parsing happens locally in Kotlin. No cloud function, no API call, no SDK that calls home.</div>
+        </div>
+        <div class="privacy-item reveal" style="transition-delay:0.2s">
+          <div class="privacy-item-icon">🗄️</div>
+          <div class="privacy-item-title">Local Database Only</div>
+          <div class="privacy-item-desc">Subscriptions are stored in an encrypted Room (SQLite) database on your device. Only you can access it.</div>
+        </div>
+        <div class="privacy-item reveal" style="transition-delay:0.3s">
+          <div class="privacy-item-icon">👁️</div>
+          <div class="privacy-item-title">You Review First</div>
+          <div class="privacy-item-desc">Nothing is auto-saved. You see every detected subscription and choose what to import. You're always in control.</div>
+        </div>
+        <div class="privacy-item reveal" style="transition-delay:0.4s">
+          <div class="privacy-item-icon">🔓</div>
+          <div class="privacy-item-title">No Account Required</div>
+          <div class="privacy-item-desc">No email, no password, no profile. SubTrack works the moment you install it — no sign-up gate ever.</div>
+        </div>
+        <div class="privacy-item reveal" style="transition-delay:0.5s">
+          <div class="privacy-item-icon">🗑️</div>
+          <div class="privacy-item-title">Delete Anytime</div>
+          <div class="privacy-item-desc">Uninstalling the app removes all data. There's no server-side copy because there's no server at all.</div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:48px;position:relative;z-index:1">
+        <a href="https://gist.github.com/ug2454/c49d37a6181a36ce8a308140dd946e9a"
+           target="_blank" rel="noopener"
+           class="btn" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#CBD5E1">
+          Read Privacy Policy →
+        </a>
+      </div>
     </div>
-    <div class="sms-bubble">
-      <div class="sms-sender">VM-SBINB</div>
-      INR <span class="highlight">299.00</span> debited from A/c XX9012 for <span class="highlight">HOTSTAR</span>. Bal: INR 8,200.00
-      <div class="sms-detected">✓ Disney+ Hotstar detected — ₹299/mo</div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       CTA
+  ═══════════════════════════════════════════ -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-card reveal">
+        <h2 class="cta-title">Stop paying for things<br/>you forgot about.</h2>
+        <p class="cta-desc">Join thousands of users who finally know where their money goes. Free, offline, and takes 30 seconds to set up.</p>
+        <a href="https://play.google.com/store/apps/details?id=com.mecazor.subtracker&pcampaignid=web_share"
+           class="cta-btn" target="_blank" rel="noopener">
+          <svg width="22" height="22" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+            <path d="M48 32C21.5 32 0 53.5 0 80v352c0 26.5 21.5 48 48 48h16V32H48zm416 0h-16v400h16c26.5 0 48-21.5 48-48V80c0-26.5-21.5-48-48-48zM96 32v400l192-108.3V140.3L96 32zm204.4 156.5l51.5 29-51.5 29v-58z" fill="currentColor"/>
+          </svg>
+          Download on Google Play
+        </a>
+        <div class="cta-note">Free forever · No account · Works offline</div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- PRIVACY -->
-<section class="privacy" id="privacy">
-  <h2>Your data stays on your phone. Always.</h2>
-  <p>SubTrack has no servers, no analytics, no ads. It can't even connect to the internet. What's on your phone stays on your phone.</p>
-  <div class="privacy-items">
-    <div class="privacy-item">🔒 No internet permission</div>
-    <div class="privacy-item">📵 No account required</div>
-    <div class="privacy-item">🚫 No ads or tracking</div>
-    <div class="privacy-item">📱 SMS read on-device only</div>
-    <div class="privacy-item">🗑️ Delete your data anytime</div>
-    <div class="privacy-item">☁️ Nothing uploaded, ever</div>
-  </div>
-</section>
+  <!-- ═══════════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════════ -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
 
-<!-- CTA -->
-<section class="cta">
-  <h2>Stop paying for subscriptions you forgot about.</h2>
-  <p>The average person wastes ₹800/month on unused subscriptions. SubTrack helps you find and cancel them.</p>
-  <a href="https://play.google.com/store/apps/details?id=com.mecazor.subtracker&pcampaignid=web_share" class="play-btn" target="_blank">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M3.18 23.76c.33.18.7.2 1.05.06l11.84-6.84-2.49-2.49-10.4 9.27zM20.7 9.56L5.42.54C5.06.33 4.66.32 4.32.5L14.77 11l5.93-1.44zM22.1 11.07l-3.38-1.95-2.78 2.78 2.78 2.78 3.41-1.97c.97-.56.97-2.08-.03-2.64zM4.32 23.5c.34.18.74.17 1.1-.04L20.7 14.44 14.77 13 4.32 23.5z"/></svg>
-    Download on Google Play
-  </a>
-</section>
+        <div class="footer-brand">
+          <a href="#" class="nav-logo" style="margin-bottom:0">
+            <img src="icon_512.png" alt="SubTrack" />
+            SubTrack
+          </a>
+          <p>Know what you pay, every month. Automatic subscription tracking from bank SMS. 100% offline.</p>
+          <div class="footer-social">
+            <!-- X / Twitter -->
+            <a href="https://x.com/TrackSub18898" target="_blank" rel="noopener" class="social-link" aria-label="X (Twitter)">
+              <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.734l7.73-8.835L1.254 2.25H8.08l4.263 5.634 5.9-5.634zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <!-- LinkedIn -->
+            <a href="https://www.linkedin.com/company/115684160/" target="_blank" rel="noopener" class="social-link" aria-label="LinkedIn">
+              <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+            </a>
+            <!-- Google Play -->
+            <a href="https://play.google.com/store/apps/details?id=com.mecazor.subtracker&pcampaignid=web_share" target="_blank" rel="noopener" class="social-link" aria-label="Google Play">
+              <svg viewBox="0 0 512 512"><path d="M48 32C21.5 32 0 53.5 0 80v352c0 26.5 21.5 48 48 48h16V32H48zm416 0h-16v400h16c26.5 0 48-21.5 48-48V80c0-26.5-21.5-48-48-48zM96 32v400l192-108.3V140.3L96 32zm204.4 156.5l51.5 29-51.5 29v-58z"/></svg>
+            </a>
+          </div>
+        </div>
 
-<!-- FOOTER -->
-<footer>
-  <div class="nav-logo">
-    <img src="icon_512.png" alt="SubTrack" style="width:36px;height:36px;border-radius:10px;" />
-    SubTrack
-  </div>
-  <div>© 2026 SubTrack. All rights reserved.</div>
-  <div class="footer-links">
-    <a href="https://gist.github.com/ug2454/c49d37a6181a36ce8a308140dd946e9a" target="_blank">Privacy Policy</a>
-    <a href="https://play.google.com/store/apps/details?id=com.mecazor.subtracker&pcampaignid=web_share" target="_blank">Google Play</a>
-    <a href="https://www.linkedin.com/company/115684160/" target="_blank">LinkedIn</a>
-    <a href="https://x.com/TrackSub18898" target="_blank">X (Twitter)</a>
-  </div>
-</footer>
+        <div>
+          <div class="footer-col-title">Product</div>
+          <ul class="footer-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#how-it-works">How it works</a></li>
+            <li><a href="#sms-demo">SMS Detection</a></li>
+            <li><a href="https://play.google.com/store/apps/details?id=com.mecazor.subtracker&pcampaignid=web_share" target="_blank" rel="noopener">Download</a></li>
+          </ul>
+        </div>
 
+        <div>
+          <div class="footer-col-title">Connect</div>
+          <ul class="footer-links">
+            <li><a href="https://x.com/TrackSub18898" target="_blank" rel="noopener">X (Twitter)</a></li>
+            <li><a href="https://www.linkedin.com/company/115684160/" target="_blank" rel="noopener">LinkedIn</a></li>
+            <li><a href="https://play.google.com/store/apps/details?id=com.mecazor.subtracker&pcampaignid=web_share" target="_blank" rel="noopener">Google Play</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="footer-col-title">Legal</div>
+          <ul class="footer-links">
+            <li><a href="https://gist.github.com/ug2454/c49d37a6181a36ce8a308140dd946e9a" target="_blank" rel="noopener">Privacy Policy</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 SubTrack. All rights reserved.</div>
+        <div>Built with ❤️ for Android · India</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════
+       JAVASCRIPT
+  ═══════════════════════════════════════════ -->
+  <script>
+    // ── Theme toggle ──────────────────────────────────────────
+    const html = document.documentElement;
+    const themeBtn = document.getElementById('themeToggle');
+    const saved = localStorage.getItem('subtrack-theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (saved) {
+      html.setAttribute('data-theme', saved);
+    } else if (prefersDark) {
+      html.setAttribute('data-theme', 'dark');
+    }
+
+    themeBtn.addEventListener('click', () => {
+      const current = html.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('subtrack-theme', next);
+    });
+
+    // ── Sticky nav scroll effect ──────────────────────────────
+    const nav = document.getElementById('mainNav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 16);
+    }, { passive: true });
+
+    // ── Mobile hamburger ──────────────────────────────────────
+    const hamburger = document.getElementById('navHamburger');
+    hamburger.addEventListener('click', () => {
+      nav.classList.toggle('menu-open');
+    });
+
+    // Close mobile menu when a nav link is clicked
+    document.getElementById('navLinks').querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => nav.classList.remove('menu-open'));
+    });
+
+    // ── Intersection Observer: scroll-reveal ─────────────────
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    // ── SMS item stagger animation ────────────────────────────
+    const smsItems = document.querySelectorAll('.sms-item');
+    const smsObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          smsItems.forEach((item, i) => {
+            setTimeout(() => item.classList.add('animate-in'), i * 120);
+          });
+          smsObserver.disconnect();
+        }
+      });
+    }, { threshold: 0.15 });
+
+    const smsSection = document.getElementById('smsItems');
+    if (smsSection) smsObserver.observe(smsSection);
+  </script>
 </body>
 </html>
